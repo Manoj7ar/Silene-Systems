@@ -11,7 +11,6 @@ const links = [
   { href: "/app/medications", label: "Medications" },
   { href: "/app/appointments", label: "Appointments" },
   { href: "/app/summary", label: "Clinic summary" },
-  { href: "/app/family", label: "Family" },
   { href: "/app/settings", label: "Settings" },
 ];
 

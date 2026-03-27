@@ -14,6 +14,7 @@ From the **repository root** you can run `npm install` and `npm run dev` (worksp
 
 Copy `.env.example` to `.env.local`:
 
+- `DEMO_AUTO_SEED` — optional; set to `1` or `true` to **auto-load** sample dashboard data on first visit when the signed-in user has **no** daily logs and **no** medications (good for demos). Turn off for normal use.
 - `NEXT_PUBLIC_APP_URL` — base URL for email redirects (e.g. `http://localhost:3000` locally, your production URL in deploy). Used by sign-up and password-reset links.
 - `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — required for sign-in and data (RLS expects a user id when saving)
 
@@ -61,7 +62,6 @@ Set **Site URL** to the same origin as `NEXT_PUBLIC_APP_URL` for your environmen
 | `/app/medications` | Medications + adherence |
 | `/app/appointments` | Upcoming visits |
 | `/app/summary` | AI clinic summary + PDF download |
-| `/app/family` | Link a carer by user UUID |
 | `/app/settings` | Voice & language (TTS voice, BCP 47 speech language) |
 
 **Voice API routes (server-only key):** `GET /api/voice/status`, `GET /api/voice/voices`, `POST /api/voice/tts`, `POST /api/voice/transcribe`.

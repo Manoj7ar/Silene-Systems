@@ -2,9 +2,11 @@ import { AiInsights } from "@/components/AiInsights";
 import { CombinedHealthChart } from "@/components/dashboard/CombinedHealthChart";
 import { DashboardBarCharts } from "@/components/dashboard/DashboardBarCharts";
 import { DashboardStatsStrip } from "@/components/dashboard/DashboardStatsStrip";
+import { seedDemoDataIfEmpty } from "@/app/actions/demo";
 import { DemoDataButton } from "@/components/dashboard/DemoDataButton";
+import { DemoPromoBanner } from "@/components/dashboard/DemoPromoBanner";
 import { SignedOutNotice } from "@/components/SignedOutNotice";
-import { DashboardGreetingSpeak } from "@/components/voice/DashboardGreetingSpeak";
+import { DashboardVoiceAssistant } from "@/components/voice/DashboardVoiceAssistant";
 import { buttonClassName } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import {
@@ -40,6 +42,13 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return <SignedOutNotice />;
+
+  const demoAuto =
+    process.env.DEMO_AUTO_SEED === "1" ||
+    process.env.DEMO_AUTO_SEED === "true";
+  if (demoAuto) {
+    await seedDemoDataIfEmpty();
+  }
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -121,8 +130,6 @@ export default async function DashboardPage() {
     (alerts?.some((a) => a.severity === "watch") && "Moderate") ||
     "Low";
 
-  const greetingSpeak = `Hello${profile?.name ? `, ${profile.name}` : ""}. Your week at a glance — check in daily for the best insights.`;
-
   return (
     <div className="space-y-8">
       <div>
@@ -132,8 +139,10 @@ export default async function DashboardPage() {
         <p className="mt-1 text-foreground/70">
           Your week at a glance — check in daily for the best insights.
         </p>
-        <DashboardGreetingSpeak text={greetingSpeak} />
+        <DashboardVoiceAssistant />
       </div>
+
+      {(logs ?? []).length === 0 && medCount === 0 && <DemoPromoBanner />}
 
       <section>
         <h2 className="font-serif text-xl font-semibold text-primary-dark">

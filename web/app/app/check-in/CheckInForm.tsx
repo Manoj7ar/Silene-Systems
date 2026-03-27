@@ -62,7 +62,7 @@ export function CheckInForm({
         | ((ev: { results: { transcript: string }[][] }) => void)
         | null;
       onend: (() => void) | null;
-      onerror: (() => void) | null;
+      onerror: ((ev?: unknown) => void) | null;
     };
     const w = window as unknown as {
       SpeechRecognition?: SpeechRecCtor;
@@ -83,7 +83,15 @@ export function CheckInForm({
       setSymptoms((s) => (s ? `${s} ${text}` : text));
     };
     rec.onend = () => setListening(false);
-    rec.onerror = () => setListening(false);
+    rec.onerror = (ev: unknown) => {
+      setListening(false);
+      const code = (ev as { error?: string }).error;
+      if (code === "not-allowed" || code === "service-not-allowed") {
+        setStatus(
+          "Microphone is blocked for speech recognition. Allow the mic for this site or type instead."
+        );
+      }
+    };
     setListening(true);
     rec.start();
   }

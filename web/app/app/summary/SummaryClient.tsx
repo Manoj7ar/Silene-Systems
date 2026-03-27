@@ -3,13 +3,17 @@
 import { SpeakAloudButton } from "@/components/voice/SpeakAloudButton";
 import { Button } from "@/components/ui/Button";
 import {
+  parseBoldSegments,
+  stripBoldMarkersForSpeech,
+} from "@/lib/text-bold-markers";
+import {
   Document,
   Page,
   StyleSheet,
   Text,
   pdf,
 } from "@react-pdf/renderer";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 const styles = StyleSheet.create({
   page: { padding: 48, fontSize: 11, lineHeight: 1.5 },
@@ -23,11 +27,22 @@ const styles = StyleSheet.create({
 });
 
 function ClinicDoc({ text }: { text: string }) {
+  const segments = parseBoldSegments(text);
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         <Text style={styles.title}>ElderCare Companion — clinic summary</Text>
-        <Text style={styles.body}>{text}</Text>
+        <Text style={styles.body}>
+          {segments.map((seg, idx) =>
+            seg.bold ? (
+              <Text key={idx} style={{ fontWeight: "bold" }}>
+                {seg.text}
+              </Text>
+            ) : (
+              <Text key={idx}>{seg.text}</Text>
+            )
+          )}
+        </Text>
         <Text style={styles.foot}>
           Not medical advice. ElderCare Companion — pattern summary only. Discuss
           with your clinician.
@@ -98,11 +113,21 @@ export function SummaryClient() {
       {summary && (
         <div className="space-y-4">
           <div className="rounded-2xl border border-primary/15 bg-surface-alt p-6 shadow-[var(--shadow-card)]">
-            <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground">
-              {summary}
-            </pre>
+            <div className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground">
+              {parseBoldSegments(summary).map((seg, i) => (
+                <Fragment key={i}>
+                  {seg.bold ? (
+                    <strong className="font-semibold text-primary-dark">
+                      {seg.text}
+                    </strong>
+                  ) : (
+                    seg.text
+                  )}
+                </Fragment>
+              ))}
+            </div>
           </div>
-          <SpeakAloudButton text={summary} />
+          <SpeakAloudButton text={stripBoldMarkersForSpeech(summary)} />
         </div>
       )}
     </div>

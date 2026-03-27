@@ -116,8 +116,12 @@ export function useAudioTranscription(options: {
       timerRef.current = setTimeout(() => {
         rec.stop();
       }, maxDurationMs);
-    } catch {
-      setErr("Microphone permission denied or unavailable.");
+    } catch (e) {
+      const msg =
+        e instanceof DOMException && e.name === "NotAllowedError"
+          ? "Microphone access was denied. Allow the microphone for this site in your browser settings, or type instead."
+          : "Microphone permission denied or unavailable.";
+      setErr(msg);
     }
   }, [cleanupStream, languageCode, maxDurationMs, onTranscript]);
 

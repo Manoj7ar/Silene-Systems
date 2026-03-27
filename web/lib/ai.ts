@@ -6,13 +6,28 @@ const DEMO_REPLY =
   "Here is a placeholder. Configure an API key to enable AI insights and clinic summaries. " +
   "The patient has logged symptoms and medications in ElderCare Companion; review trends with their clinician.";
 
-/** Models tried in order if `GEMINI_MODEL` is unset or fails (Google AI Studio / Generative Language API). */
+/**
+ * Default chain when `GEMINI_MODEL` is unset: newest / strongest first, older models as fallback.
+ * If `GEMINI_MODEL` is set in `.env.local`, that model is tried first, then this list (deduped).
+ *
+ * Do not use deprecated aliases like `gemini-1.5-flash-latest` — they return 404 on current API.
+ */
 const GEMINI_MODEL_FALLBACKS = [
-  "gemini-1.5-flash",
-  "gemini-1.5-flash-latest",
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
+  "gemini-2.5-pro",
   "gemini-2.0-flash",
   "gemini-2.0-flash-001",
+  "gemini-1.5-flash",
 ] as const;
+
+/** Map retired API names so env vars from old docs still work. */
+function normalizePreferredModel(preferred: string | null | undefined): string | null {
+  const t = preferred?.trim();
+  if (!t) return null;
+  if (t === "gemini-1.5-flash-latest") return "gemini-1.5-flash";
+  return t;
+}
 
 function uniqueModels(preferred?: string | null): string[] {
   const out: string[] = [];
@@ -23,9 +38,30 @@ function uniqueModels(preferred?: string | null): string[] {
     seen.add(t);
     out.push(t);
   };
-  if (preferred?.trim()) add(preferred);
+  const p = normalizePreferredModel(preferred);
+  if (p) add(p);
   for (const m of GEMINI_MODEL_FALLBACKS) add(m);
   return out;
+}
+
+function isQuotaOrRateLimitError(err: unknown): boolean {
+  const s =
+    err instanceof Error
+      ? err.message
+      : typeof err === "object" && err !== null && "message" in err
+        ? String((err as { message: string }).message)
+        : String(err);
+  return /429|Too Many Requests|quota|RESOURCE_EXHAUSTED|rate limit/i.test(s);
+}
+
+function isModelNotFoundError(err: unknown): boolean {
+  const s =
+    err instanceof Error
+      ? err.message
+      : typeof err === "object" && err !== null && "message" in err
+        ? String((err as { message: string }).message)
+        : String(err);
+  return /404|not found|is not found for API version/i.test(s);
 }
 
 function extractGeminiText(result: {
@@ -58,7 +94,9 @@ async function runGemini(system: string, user: string): Promise<string> {
   const key = process.env.GEMINI_API_KEY?.trim();
   if (!key) throw new Error("GEMINI_API_KEY missing");
 
-  const envModel = process.env.GEMINI_MODEL?.trim() || null;
+  const envModel = normalizePreferredModel(
+    process.env.GEMINI_MODEL?.trim() || null
+  );
   const genAI = new GoogleGenerativeAI(key);
   const models = uniqueModels(envModel);
 
@@ -110,10 +148,28 @@ function formatAiFailure(err: unknown): string {
         ? String((err as { message: string }).message)
         : String(err);
   const short = msg.slice(0, 220);
+
+  if (isQuotaOrRateLimitError(err)) {
+    return (
+      `[Google AI quota or rate limit reached — try again in a few minutes.] ` +
+      `Check usage and limits in Google AI Studio for this API key’s project. ` +
+      `To reduce usage, set GEMINI_MODEL=gemini-2.5-flash-lite in web/.env.local. ` +
+      `Adding ANTHROPIC_API_KEY enables automatic fallback when Gemini is over quota.`
+    );
+  }
+
+  if (isModelNotFoundError(err)) {
+    return (
+      `[Gemini model not available for this API key or region.] ` +
+      `Remove or update GEMINI_MODEL in web/.env.local — use a current id such as gemini-2.5-flash or gemini-2.0-flash-001 ` +
+      `(see https://ai.google.dev/gemini-api/docs/models ). Technical detail: ${short}`
+    );
+  }
+
   return (
     `[AI could not complete this request: ${short}] ` +
     `Confirm GEMINI_API_KEY in Google AI Studio, enable the Generative Language API for the key’s project, ` +
-    `and optionally set GEMINI_MODEL=gemini-1.5-flash in web/.env.local.`
+    `and optionally set GEMINI_MODEL=gemini-2.5-flash in web/.env.local.`
   );
 }
 
@@ -127,6 +183,19 @@ export async function runAiPrompt(system: string, user: string): Promise<string>
       return await runGemini(system, user);
     } catch (e) {
       console.error("[ai] Gemini error:", e);
+      if (
+        process.env.ANTHROPIC_API_KEY?.trim() &&
+        isQuotaOrRateLimitError(e)
+      ) {
+        try {
+          console.warn(
+            "[ai] Falling back to Anthropic after Gemini quota/rate limit"
+          );
+          return await runAnthropic(system, user);
+        } catch (e2) {
+          console.error("[ai] Anthropic fallback error:", e2);
+        }
+      }
       return formatAiFailure(e);
     }
   }

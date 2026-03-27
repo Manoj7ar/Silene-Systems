@@ -141,3 +141,35 @@ export async function seedDemoData(): Promise<{ ok: true } | { ok: false; error:
 
   return { ok: true };
 }
+
+/**
+ * Loads the same sample data as {@link seedDemoData} only when the user has
+ * **no** daily logs and **no** medications — safe for first-time demo / `DEMO_AUTO_SEED`.
+ */
+export async function seedDemoDataIfEmpty(): Promise<
+  { ok: true; seeded: boolean } | { ok: false; error: string }
+> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Sign in to load sample data." };
+
+  const { count: logCount } = await supabase
+    .from("daily_logs")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id);
+
+  const { count: medCount } = await supabase
+    .from("medications")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id);
+
+  if ((logCount ?? 0) > 0 || (medCount ?? 0) > 0) {
+    return { ok: true, seeded: false };
+  }
+
+  const r = await seedDemoData();
+  if (!r.ok) return r;
+  return { ok: true, seeded: true };
+}

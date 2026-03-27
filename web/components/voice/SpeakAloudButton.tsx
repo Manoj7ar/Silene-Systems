@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { friendlyPlaybackError } from "@/lib/voice-playback";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type Props = {
@@ -83,7 +84,7 @@ export function SpeakAloudButton({ text, className = "" }: Props) {
       await audio.play();
       setPhase("playing");
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Voice unavailable");
+      setErr(friendlyPlaybackError(e));
       setPhase("error");
       cleanup();
     }

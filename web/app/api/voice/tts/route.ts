@@ -6,8 +6,8 @@ const MAX_CHARS = 4000;
 
 const ELEVEN_API = "https://api.elevenlabs.io/v1/text-to-speech";
 
-/** Default: “Rachel” — clear English; override with ELEVENLABS_VOICE_ID or profile */
-const DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
+/** Default ElevenLabs voice; override with `ELEVENLABS_VOICE_ID` or `/app/settings`. */
+const DEFAULT_VOICE_ID = "jqcCZkN6Knx8BJ5TBdYR";
 
 export async function POST(request: Request) {
   const key = process.env.ELEVENLABS_API_KEY;
