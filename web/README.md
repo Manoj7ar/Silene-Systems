@@ -1,6 +1,6 @@
-# ElderCare Companion — Next.js
+# ElderCare Companion — Next.js app
 
-From the **repository root** you can run `npm install` and `npm run dev` (workspace); this package is **`eldercare-web`**.
+This package (**`eldercare-web`**) is the main product UI and API. Run **`npm install`** and **`npm run dev`** from the **repository root** (npm workspaces).
 
 ## Scripts
 
@@ -12,68 +12,61 @@ From the **repository root** you can run `npm install` and `npm run dev` (worksp
 
 ## Environment
 
-Copy `.env.example` to `.env.local`:
+Copy **`.env.example`** to **`.env.local`**:
 
-- `DEMO_AUTO_SEED` — optional; set to `1` or `true` to **auto-load** sample dashboard data on first visit when the signed-in user has **no** daily logs and **no** medications (good for demos). Turn off for normal use.
-- `NEXT_PUBLIC_APP_URL` — base URL for email redirects (e.g. `http://localhost:3000` locally, your production URL in deploy). Used by sign-up and password-reset links.
-- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` — required for sign-in and data (RLS expects a user id when saving)
+- **`DEMO_AUTO_SEED`** — Optional; `1` or `true` seeds sample dashboard data when the user has no logs/meds (demos only).
+- **`NEXT_PUBLIC_APP_URL`** — Base URL for auth email links (local dev or production origin).
+- **`NEXT_PUBLIC_SUPABASE_URL`** / **`NEXT_PUBLIC_SUPABASE_ANON_KEY`** — Required for sign-in and persisted data (RLS per user).
 
 ### Local Supabase (CLI + Docker)
 
-From the **repository root** (not `web/`):
+From the **repository root**:
 
-1. Install [Docker Desktop](https://docs.docker.com/desktop/) and keep it running.
-2. **Log in to Supabase** (opens the browser): `npm run sb:login`
-3. Start the local stack: `npm run sb:start` (first run downloads images).
-4. Apply migrations and seed: `npm run sb:reset`
-5. Print API URL and keys for `.env.local`: `npm run sb:env`  
-   Paste the lines into `web/.env.local` (or copy from `npm run sb:status`). Local API is usually `http://127.0.0.1:54321`.
-6. Run the app: `npm run dev` from the repo root.
+1. Install Docker Desktop and keep it running.
+2. `npm run sb:login`
+3. `npm run sb:start`
+4. `npm run sb:reset` (migrations + seed)
+5. `npm run sb:env` → paste into `web/.env.local`
+6. `npm run dev` from repo root
 
-`supabase/config.toml` already allows `http://127.0.0.1:3000/auth/callback` and `http://localhost:3000/auth/callback` for PKCE flows.
+`supabase/config.toml` allows local auth callbacks on port 3000.
 
-**Hosted project instead:** after `npm run sb:login`, run `npm run sb:link`, choose your project, then `npx supabase db push` to apply `supabase/migrations/` to the cloud database. Add the project’s **Project URL** and **anon key** from the Supabase dashboard to `web/.env.local`, and add your production `/auth/callback` URL under Authentication → URL configuration.
+**Hosted Supabase:** `npm run sb:link`, then `npx supabase db push`, then add project URL + anon key to `web/.env.local` and configure redirect URLs in the dashboard.
 
 ### Authentication
 
-Routes: **`/get-started`** (entry from the landing **Get Started** button — links to sign-in and sign-up with `next=/app`), **`/auth/login`**, **`/auth/signup`**, **`/auth/forgot-password`**, **`/auth/update-password`**, **`/auth/callback`** (OAuth/email confirmation/password recovery — do not link directly).
+Routes: **`/get-started`**, **`/auth/login`**, **`/auth/signup`**, **`/auth/forgot-password`**, **`/auth/update-password`**, **`/auth/callback`** (do not bookmark the callback URL).
 
-The **`/app/**`** area requires a signed-in user when Supabase env vars are set; otherwise you can still open `/app` but data APIs will not persist. Configure **`NEXT_PUBLIC_SUPABASE_URL`** and **`NEXT_PUBLIC_SUPABASE_ANON_KEY`** in `web/.env.local` yourself (Supabase dashboard).
+### AI and voice (optional)
 
-In the **Supabase dashboard** → Authentication → URL configuration, add to **Redirect URLs** (adjust host as needed):
-
-- `http://localhost:3000/auth/callback`
-- `https://<your-production-domain>/auth/callback`
-
-Set **Site URL** to the same origin as `NEXT_PUBLIC_APP_URL` for your environment.
-- `GEMINI_API_KEY` — optional; AI insights and clinic summary use **Gemini** when set (preferred). Optional `GEMINI_MODEL` (default `gemini-2.0-flash`).
-- `ANTHROPIC_API_KEY` — optional; used if `GEMINI_API_KEY` is unset; demo string if neither is set
-- `ELEVENLABS_API_KEY` — optional; enables **Listen** (TTS via `/api/voice/tts`) and **Record & transcribe** (STT via `/api/voice/transcribe`) on check-in. Optional: `ELEVENLABS_VOICE_ID`, `ELEVENLABS_MODEL_ID`, `ELEVENLABS_STT_MODEL_ID` (see `.env.example`). Per-user read-aloud voice and speech language: **`/app/settings`** (requires Supabase migration `20250328120000_voice_preferences.sql`).
+- **`GEMINI_API_KEY`** — Primary AI (insights, clinic summary, dashboard chat). Optional **`GEMINI_MODEL`** to pin a model.
+- **`ANTHROPIC_API_KEY`** — Fallback when Gemini fails or is unset.
+- **`ELEVENLABS_API_KEY`** — TTS (`/api/voice/tts`) and STT (`/api/voice/transcribe`) where used. Voice ID and model overrides: see `.env.example`. Per-user voice/language: **`/app/settings`** (requires voice-preferences migration).
 
 ## Routes
 
 | Path | Purpose |
 |------|---------|
-| `/` | Static Silene landing (`public/index.html`) in an iframe |
-| `/get-started` | Choose sign in or sign up (then `/app`) |
-| `/auth/login`, `/auth/signup`, … | Sign in, register, password reset |
-| `/app` | Dashboard (requires session when Supabase is configured) |
-| `/app/check-in` | Daily check-in (Web Speech API where supported) |
-| `/app/medications` | Medications + adherence |
-| `/app/appointments` | Upcoming visits |
-| `/app/summary` | AI clinic summary + PDF download |
-| `/app/settings` | Voice & language (TTS voice, BCP 47 speech language) |
+| `/` | Bundled static landing (iframe) |
+| `/get-started` | Sign in or sign up |
+| `/auth/*` | Auth flows |
+| `/app` | Dashboard |
+| `/app/check-in` | Daily check-in (speech where supported) |
+| `/app/medications` | Medications and adherence |
+| `/app/appointments` | Appointments |
+| `/app/summary` | AI clinic summary + PDF |
+| `/app/settings` | Voice and language |
 
-**Voice API routes (server-only key):** `GET /api/voice/status`, `GET /api/voice/voices`, `POST /api/voice/tts`, `POST /api/voice/transcribe`.
+**Voice APIs (server-only keys):** `GET /api/voice/status`, `GET /api/voice/voices`, `POST /api/voice/tts`, `POST /api/voice/transcribe`. **AI:** `POST /api/ai/insights`, `POST /api/ai/clinic-summary`, `POST /api/ai/dashboard-chat`.
 
 ## Supabase
 
-SQL migrations live at the **repo root**: `../supabase/migrations/` (or `supabase/migrations/` from the repository root). Apply them with the CLI (`npm run sb:reset` locally) or paste into the SQL editor for a hosted project. Saving data uses Supabase with row-level security (per-user rows).
+Migrations: **`../supabase/migrations/`** (from repo root). Apply via CLI or SQL editor on hosted projects.
 
 ## Deploy (e.g. Vercel)
 
-Set the **root directory** to **`web`** (or use the repo root with npm workspaces and `npm run build` from root). Configure env vars. `prebuild` syncs the static landing into `public/`.
+Set project **root** to **`web`** (or use workspaces from repo root). Add all env vars from `.env.example`. `prebuild` runs `sync-public` before `next build`.
 
 ## Troubleshooting
 
-**`Cannot find module './342.js'`, `TypeError: e[o] is not a function` in `webpack-runtime.js`, or other odd chunk / RSC errors** — usually a **stale or mixed `web/.next` cache** (dev server left running across big refactors, interrupted builds, or copying `.next`). Stop the dev server, run `rm -rf web/.next`, then `npm run dev` or `npm run build` from the repo root.
+**Missing webpack chunk (`Cannot find module './NNN.js'`) or odd RSC errors** — Usually a stale **`web/.next`**. Stop the dev server, run `rm -rf web/.next`, then `npm run dev` or `npm run build` again.

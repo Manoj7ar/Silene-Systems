@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/Card";
-import type { DashboardStats } from "@/lib/dashboard-analytics";
+import type { DashboardStats } from "@/lib/dashboard/analytics";
 
 export function DashboardStatsStrip({ stats }: { stats: DashboardStats }) {
   const mood =

@@ -2,9 +2,15 @@
 
 import { Button } from "@/components/ui/Button";
 import {
+  ensureMicrophonePermission,
+  speechRecognitionErrorMessage,
+} from "@/lib/voice/mic-access";
+import {
+  createBlobUrlFromTtsResponse,
   friendlyPlaybackError,
   isNotAllowedMediaError,
-} from "@/lib/voice-playback";
+  messageFromMediaError,
+} from "@/lib/voice/playback";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const MAX_TTS_CHARS = 4000;
@@ -38,6 +44,7 @@ export function DashboardVoiceAssistant() {
   const [err, setErr] = useState<string | null>(null);
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [listening, setListening] = useState(false);
+  const [micLoading, setMicLoading] = useState(false);
   /** TTS blob URL kept when autoplay is blocked until user taps Play voice. */
   const [ttsNeedsTap, setTtsNeedsTap] = useState(false);
 
@@ -82,11 +89,13 @@ export function DashboardVoiceAssistant() {
         if (!res.ok) {
           const data = (await res.json().catch(() => ({}))) as {
             error?: string;
+            detail?: string;
           };
-          throw new Error(data.error ?? `Voice failed (${res.status})`);
+          throw new Error(
+            data.detail || data.error || `Voice failed (${res.status})`
+          );
         }
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
+        const url = await createBlobUrlFromTtsResponse(res);
         urlRef.current = url;
         const audio = new Audio(url);
         audioRef.current = audio;
@@ -106,7 +115,8 @@ export function DashboardVoiceAssistant() {
         }
         await new Promise<void>((resolve, reject) => {
           audio.onended = () => resolve();
-          audio.onerror = () => reject(new Error("Playback failed"));
+          audio.onerror = () =>
+            reject(new Error(messageFromMediaError(audio)));
         });
       } catch (e) {
         setErr(friendlyPlaybackError(e));
@@ -132,7 +142,8 @@ export function DashboardVoiceAssistant() {
       await audio.play();
       await new Promise<void>((resolve, reject) => {
         audio.onended = () => resolve();
-        audio.onerror = () => reject(new Error("Playback failed"));
+        audio.onerror = () =>
+          reject(new Error(messageFromMediaError(audio)));
       });
     } catch (e) {
       setErr(friendlyPlaybackError(e));
@@ -208,7 +219,7 @@ export function DashboardVoiceAssistant() {
     }
   }
 
-  function toggleMic() {
+  async function toggleMic() {
     if (typeof window === "undefined") return;
     const Ctor =
       (
@@ -234,6 +245,14 @@ export function DashboardVoiceAssistant() {
     }
 
     setErr(null);
+    setMicLoading(true);
+    const mic = await ensureMicrophonePermission();
+    setMicLoading(false);
+    if (!mic.ok) {
+      setErr(mic.message);
+      return;
+    }
+
     const rec = new Ctor();
     recRef.current = rec;
     rec.lang = "en-US";
@@ -248,13 +267,8 @@ export function DashboardVoiceAssistant() {
     rec.onerror = (ev: unknown) => {
       setListening(false);
       const code = (ev as { error?: string }).error;
-      if (code === "not-allowed" || code === "service-not-allowed") {
-        setErr(
-          "Microphone is blocked. Allow the mic for this site in your browser (lock icon in the address bar), or type your question."
-        );
-        return;
-      }
-      setErr("Could not capture speech. Try again or type your question.");
+      const msg = speechRecognitionErrorMessage(code);
+      if (msg) setErr(msg);
     };
     rec.onend = () => setListening(false);
     try {
@@ -360,8 +374,9 @@ export function DashboardVoiceAssistant() {
           type="button"
           variant={listening ? "primary" : "secondary"}
           size="md"
-          onClick={toggleMic}
-          disabled={blockInput}
+          onClick={() => void toggleMic()}
+          disabled={blockInput || micLoading}
+          loading={micLoading}
           aria-pressed={listening}
           title="Speak your question (browser)"
         >

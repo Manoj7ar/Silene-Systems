@@ -1,6 +1,6 @@
 "use client";
 
-import { addAppointment } from "@/app/actions/appointments";
+import { addAppointment } from "@/lib/actions/appointments";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";

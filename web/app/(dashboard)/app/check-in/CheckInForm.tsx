@@ -1,6 +1,10 @@
 "use client";
 
-import { saveDailyLog } from "@/app/actions/daily";
+import { saveDailyLog } from "@/lib/actions/daily";
+import {
+  ensureMicrophonePermission,
+  speechRecognitionErrorMessage,
+} from "@/lib/voice/mic-access";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Textarea } from "@/components/ui/Input";
@@ -51,7 +55,7 @@ export function CheckInForm({
     languageCode: sttLanguageHint(speechLanguage),
   });
 
-  function startListening() {
+  async function startListening() {
     if (typeof window === "undefined") return;
     type SpeechRecCtor = new () => {
       lang: string;
@@ -73,6 +77,11 @@ export function CheckInForm({
       setStatus("Speech recognition is not supported in this browser.");
       return;
     }
+    const mic = await ensureMicrophonePermission();
+    if (!mic.ok) {
+      setStatus(mic.message);
+      return;
+    }
     const rec = new SR();
     rec.lang = speechLanguage.trim() || "en-IE";
     rec.continuous = false;
@@ -86,11 +95,8 @@ export function CheckInForm({
     rec.onerror = (ev: unknown) => {
       setListening(false);
       const code = (ev as { error?: string }).error;
-      if (code === "not-allowed" || code === "service-not-allowed") {
-        setStatus(
-          "Microphone is blocked for speech recognition. Allow the mic for this site or type instead."
-        );
-      }
+      const msg = speechRecognitionErrorMessage(code);
+      if (msg) setStatus(msg);
     };
     setListening(true);
     rec.start();
@@ -183,7 +189,7 @@ export function CheckInForm({
               type="button"
               variant="secondary"
               size="lg"
-              onClick={startListening}
+              onClick={() => void startListening()}
               disabled={listening || isRecording || isUploading}
             >
               {listening ? "Listening…" : "Speak answers"}

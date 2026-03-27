@@ -1,6 +1,6 @@
 "use client";
 
-import { seedDemoData } from "@/app/actions/demo";
+import { seedDemoData } from "@/lib/actions/demo";
 import { Button } from "@/components/ui/Button";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

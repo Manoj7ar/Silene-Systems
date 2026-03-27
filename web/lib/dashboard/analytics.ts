@@ -1,4 +1,4 @@
-import { recentDates } from "@/lib/demo-seed";
+import { recentDates } from "@/lib/demo/seed";
 
 export type DashboardStats = {
   avgMood7d: number | null;

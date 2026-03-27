@@ -1,6 +1,6 @@
 "use client";
 
-import { updateVoicePreferences } from "@/app/actions/profile";
+import { updateVoicePreferences } from "@/lib/actions/profile";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";

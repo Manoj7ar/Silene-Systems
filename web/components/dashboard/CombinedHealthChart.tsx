@@ -1,6 +1,6 @@
 "use client";
 
-import type { HealthChartPoint } from "@/lib/health-chart";
+import type { HealthChartPoint } from "@/lib/dashboard/health-chart";
 import {
   CartesianGrid,
   ComposedChart,

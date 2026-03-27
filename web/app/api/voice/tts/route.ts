@@ -6,7 +6,11 @@ const MAX_CHARS = 4000;
 
 const ELEVEN_API = "https://api.elevenlabs.io/v1/text-to-speech";
 
-/** Default ElevenLabs voice; override with `ELEVENLABS_VOICE_ID` or `/app/settings`. */
+/** Query param — forces MP3 (see ElevenLabs “output_format” docs). Override if your plan requires a different preset. */
+const OUTPUT_FORMAT =
+  process.env.ELEVENLABS_OUTPUT_FORMAT?.trim() || "mp3_44100_128";
+
+/** Default ElevenLabs voice; override with `ELEVENLABS_VOICE_ID` or profile `tts_voice_id`. */
 const DEFAULT_VOICE_ID = "jqcCZkN6Knx8BJ5TBdYR";
 
 export async function POST(request: Request) {
@@ -61,22 +65,44 @@ export async function POST(request: Request) {
   const modelId =
     process.env.ELEVENLABS_MODEL_ID?.trim() || "eleven_multilingual_v2";
 
-  const upstream = await fetch(`${ELEVEN_API}/${voiceId}`, {
+  const ttsBody = {
+    text: clipped,
+    model_id: modelId,
+    voice_settings: {
+      stability: 0.5,
+      similarity_boost: 0.75,
+    },
+  };
+
+  const url = `${ELEVEN_API}/${encodeURIComponent(voiceId)}?output_format=${encodeURIComponent(OUTPUT_FORMAT)}`;
+
+  let upstream = await fetch(url, {
     method: "POST",
     headers: {
       "xi-api-key": key,
       "Content-Type": "application/json",
       Accept: "audio/mpeg",
     },
-    body: JSON.stringify({
-      text: clipped,
-      model_id: modelId,
-      voice_settings: {
-        stability: 0.5,
-        similarity_boost: 0.75,
-      },
-    }),
+    body: JSON.stringify(ttsBody),
   });
+
+  /** Invalid saved voice in profile — retry once with default voice. */
+  if (
+    !upstream.ok &&
+    (upstream.status === 400 || upstream.status === 404) &&
+    voiceId !== DEFAULT_VOICE_ID
+  ) {
+    const fallbackUrl = `${ELEVEN_API}/${encodeURIComponent(DEFAULT_VOICE_ID)}?output_format=${encodeURIComponent(OUTPUT_FORMAT)}`;
+    upstream = await fetch(fallbackUrl, {
+      method: "POST",
+      headers: {
+        "xi-api-key": key,
+        "Content-Type": "application/json",
+        Accept: "audio/mpeg",
+      },
+      body: JSON.stringify(ttsBody),
+    });
+  }
 
   if (!upstream.ok) {
     const errText = await upstream.text();
@@ -90,6 +116,16 @@ export async function POST(request: Request) {
   }
 
   const audio = await upstream.arrayBuffer();
+  if (audio.byteLength < 64) {
+    return NextResponse.json(
+      {
+        error: "ElevenLabs returned empty audio",
+        detail: "Check API key, quota, and voice ID.",
+      },
+      { status: 502 }
+    );
+  }
+
   return new NextResponse(audio, {
     status: 200,
     headers: {

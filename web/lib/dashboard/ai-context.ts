@@ -3,8 +3,8 @@ import {
   buildFourWeekCheckInBuckets,
   buildUpcomingAppointmentsByWeek,
   computeDashboardStats,
-} from "@/lib/dashboard-analytics";
-import { buildHealthChartSeries } from "@/lib/health-chart";
+} from "@/lib/dashboard/analytics";
+import { buildHealthChartSeries } from "@/lib/dashboard/health-chart";
 
 /** Compact snapshot of dashboard data for AI voice / chat (refreshed on each API call). */
 export type DashboardAiContext = {

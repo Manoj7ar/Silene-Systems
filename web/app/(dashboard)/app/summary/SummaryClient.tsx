@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import {
   parseBoldSegments,
   stripBoldMarkersForSpeech,
-} from "@/lib/text-bold-markers";
+} from "@/lib/text/bold-markers";
 import {
   Document,
   Page,

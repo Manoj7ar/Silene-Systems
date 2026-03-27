@@ -1,4 +1,4 @@
-import { fetchDashboardAiContext } from "@/lib/dashboard-ai-context";
+import { fetchDashboardAiContext } from "@/lib/dashboard/ai-context";
 import { runAiPrompt } from "@/lib/ai";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";

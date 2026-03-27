@@ -1,6 +1,6 @@
 "use client";
 
-import type { WeekBucket } from "@/lib/dashboard-analytics";
+import type { WeekBucket } from "@/lib/dashboard/analytics";
 import {
   Bar,
   BarChart,

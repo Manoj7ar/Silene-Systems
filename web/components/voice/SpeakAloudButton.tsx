@@ -1,7 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
-import { friendlyPlaybackError } from "@/lib/voice-playback";
+import {
+  createBlobUrlFromTtsResponse,
+  friendlyPlaybackError,
+  messageFromMediaError,
+} from "@/lib/voice/playback";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type Props = {
@@ -64,11 +68,13 @@ export function SpeakAloudButton({ text, className = "" }: Props) {
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as {
           error?: string;
+          detail?: string;
         };
-        throw new Error(data.error ?? `Could not load audio (${res.status})`);
+        throw new Error(
+          data.detail || data.error || `Could not load audio (${res.status})`
+        );
       }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      const url = await createBlobUrlFromTtsResponse(res);
       urlRef.current = url;
       const audio = new Audio(url);
       audioRef.current = audio;
@@ -77,7 +83,7 @@ export function SpeakAloudButton({ text, className = "" }: Props) {
         cleanup();
       };
       audio.onerror = () => {
-        setErr("Playback failed.");
+        setErr(messageFromMediaError(audio));
         setPhase("error");
         cleanup();
       };

@@ -7,7 +7,7 @@ import {
   buildDemoDailyLogs,
   DEMO_MEDICATIONS,
   recentDates,
-} from "@/lib/demo-seed";
+} from "@/lib/demo/seed";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 

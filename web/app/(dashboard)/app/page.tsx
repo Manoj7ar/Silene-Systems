@@ -1,8 +1,8 @@
-import { AiInsights } from "@/components/AiInsights";
+import { AiInsights } from "@/components/dashboard/AiInsights";
 import { CombinedHealthChart } from "@/components/dashboard/CombinedHealthChart";
 import { DashboardBarCharts } from "@/components/dashboard/DashboardBarCharts";
 import { DashboardStatsStrip } from "@/components/dashboard/DashboardStatsStrip";
-import { seedDemoDataIfEmpty } from "@/app/actions/demo";
+import { seedDemoDataIfEmpty } from "@/lib/actions/demo";
 import { DemoDataButton } from "@/components/dashboard/DemoDataButton";
 import { DemoPromoBanner } from "@/components/dashboard/DemoPromoBanner";
 import { SignedOutNotice } from "@/components/SignedOutNotice";
@@ -13,8 +13,8 @@ import {
   buildFourWeekCheckInBuckets,
   buildUpcomingAppointmentsByWeek,
   computeDashboardStats,
-} from "@/lib/dashboard-analytics";
-import { buildHealthChartSeries } from "@/lib/health-chart";
+} from "@/lib/dashboard/analytics";
+import { buildHealthChartSeries } from "@/lib/dashboard/health-chart";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 

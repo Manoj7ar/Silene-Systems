@@ -1,4 +1,4 @@
-import { recentDates } from "@/lib/demo-seed";
+import { recentDates } from "@/lib/demo/seed";
 
 export type HealthChartPoint = {
   dayLabel: string;

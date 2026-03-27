@@ -1,6 +1,6 @@
 "use client";
 
-import { addMedication, markMedicationTaken } from "@/app/actions/meds";
+import { addMedication, markMedicationTaken } from "@/lib/actions/meds";
 import { MedicationReadAloud } from "@/components/voice/MedicationReadAloud";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
