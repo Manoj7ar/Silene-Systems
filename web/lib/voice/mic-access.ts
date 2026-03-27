@@ -43,7 +43,8 @@ export function speechRecognitionErrorMessage(code: string | undefined): string 
       );
     case "service-not-allowed":
       return (
-        "Speech recognition is not available (browser, privacy mode, or region). Type your question instead."
+        "This browser’s built-in speech isn’t available (private mode or strict privacy). " +
+        "Type instead, try a normal window in Chrome or Edge, or use Speak when server transcription is enabled."
       );
     case "audio-capture":
       return "No microphone was found. Plug one in or type your question.";

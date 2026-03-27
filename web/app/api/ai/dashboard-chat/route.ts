@@ -18,13 +18,27 @@ const BRIEF_PROMPT = `Give a single spoken overview (about 90 seconds when read 
 Cover: how they are doing at a glance, medications listed, mood pattern if any, adherence in plain words, upcoming visits, and any alerts.
 If a section is empty, mention it briefly. End with one encouraging line.`;
 
+/** Appended to the system prompt for the floating voice agent (dialogue + opening turn). */
+const DIALOGUE_INSTRUCTIONS = `
+Voice dialogue mode (floating agent):
+- Have a natural back-and-forth. You may ask one short, caring question at a time when it helps the user reflect, grounded in the dashboard data.
+- Prefer brief acknowledgments, then a follow-up question when useful. Avoid lists; no markdown.
+- If they give short answers, respond warmly and ask one concrete next question when appropriate.
+`;
+
+const VOICE_OPEN_PROMPT = `You are starting a voice conversation. Give a brief welcome (one or two sentences) using their name from the data if present.
+Mention one concrete observation from their dashboard (e.g. mood pattern, medication count, adherence, next appointment, or an alert).
+Then ask exactly ONE gentle, specific question to invite them to talk. Keep the whole turn under about 80 words.`;
+
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
 export async function POST(request: Request) {
   let body: {
-    action?: "brief" | "chat";
+    action?: "brief" | "chat" | "voiceOpen";
     messages?: ChatMessage[];
     userMessage?: string;
+    /** When true (with action chat), uses dialogue-oriented instructions for the floating agent. */
+    dialogueMode?: boolean;
   };
   try {
     body = (await request.json()) as typeof body;
@@ -51,10 +65,17 @@ export async function POST(request: Request) {
     );
   }
 
-  const system = SYSTEM + JSON.stringify(ctx);
+  const dataJson = JSON.stringify(ctx);
+  const baseSystem = SYSTEM + dataJson;
 
   if (body.action === "brief") {
-    const reply = await runAiPrompt(system, BRIEF_PROMPT);
+    const reply = await runAiPrompt(baseSystem, BRIEF_PROMPT);
+    return NextResponse.json({ reply });
+  }
+
+  if (body.action === "voiceOpen") {
+    const system = baseSystem + DIALOGUE_INSTRUCTIONS;
+    const reply = await runAiPrompt(system, VOICE_OPEN_PROMPT);
     return NextResponse.json({ reply });
   }
 
@@ -76,6 +97,8 @@ export async function POST(request: Request) {
       ? `${historyBlock}\n\nUser: ${userMessage}`
       : `User: ${userMessage}`;
 
+    const system =
+      body.dialogueMode === true ? baseSystem + DIALOGUE_INSTRUCTIONS : baseSystem;
     const reply = await runAiPrompt(system, userPayload);
     return NextResponse.json({ reply });
   }

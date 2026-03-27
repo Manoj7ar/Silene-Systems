@@ -57,6 +57,10 @@ export function CheckInForm({
 
   async function startListening() {
     if (typeof window === "undefined") return;
+    if (cloudStt) {
+      void toggleRecording();
+      return;
+    }
     type SpeechRecCtor = new () => {
       lang: string;
       continuous: boolean;
@@ -187,29 +191,26 @@ export function CheckInForm({
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Button
               type="button"
-              variant="secondary"
+              variant={cloudStt && isRecording ? "primary" : "secondary"}
               size="lg"
               onClick={() => void startListening()}
-              disabled={listening || isRecording || isUploading}
+              loading={cloudStt ? isUploading : false}
+              disabled={
+                cloudStt
+                  ? isUploading
+                  : listening || isRecording || isUploading
+              }
             >
-              {listening ? "Listening…" : "Speak answers"}
-            </Button>
-            {cloudStt ? (
-              <Button
-                type="button"
-                variant="secondary"
-                size="lg"
-                loading={isUploading}
-                onClick={() => void toggleRecording()}
-                disabled={listening}
-              >
-                {isRecording
+              {cloudStt
+                ? isRecording
                   ? "Stop & transcribe"
                   : isUploading
                     ? "Transcribing…"
-                    : "Record & transcribe"}
-              </Button>
-            ) : null}
+                    : "Speak answers"
+                : listening
+                  ? "Listening…"
+                  : "Speak answers"}
+            </Button>
           </div>
           {recordErr && (
             <p className="mt-2 text-sm text-red-700" role="alert">
@@ -217,8 +218,9 @@ export function CheckInForm({
             </p>
           )}
           <p className="mt-2 text-xs text-foreground/55">
-            Speak answers uses your browser when available. Record & transcribe
-            uses ElevenLabs when configured — works in more browsers.
+            {cloudStt
+              ? "Speak answers records and transcribes on the server (no browser speech needed)."
+              : "Speak answers uses your browser. If it fails, type instead or enable server transcription in your deployment."}
           </p>
           {voiceTranscript && (
             <p className="mt-3 text-sm text-foreground/60">Heard: {voiceTranscript}</p>

@@ -1,5 +1,6 @@
 import { MedicalDisclaimer } from "@/components/MedicalDisclaimer";
 import { AppNav } from "@/components/AppNav";
+import { AppVoiceAgent } from "@/components/voice/AppVoiceAgent";
 
 export default function AppSectionLayout({
   children,
@@ -13,6 +14,7 @@ export default function AppSectionLayout({
         {children}
       </main>
       <MedicalDisclaimer />
+      <AppVoiceAgent />
     </div>
   );
 }
