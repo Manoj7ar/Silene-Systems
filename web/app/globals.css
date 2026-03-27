@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #faf9f6;
+  --color-foreground: #1a1a1a;
+  --color-primary: #1e6f6a;
+  --color-primary-dark: #134540;
+  --color-surface: #faf9f6;
+  --color-surface-alt: #f4f3f0;
+  --color-footer: #113d3a;
+  --font-sans: var(--font-ibm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-ibm-serif), ui-serif, Georgia, serif;
+  --font-mono: var(--font-ibm-mono), ui-monospace, monospace;
+
+  /* Elevation & motion (referenced in components via arbitrary values or future utilities) */
+  --shadow-card: 0 1px 3px rgb(19 69 64 / 0.06), 0 1px 2px rgb(19 69 64 / 0.04);
+  --shadow-card-hover: 0 4px 14px rgb(19 69 64 / 0.08), 0 2px 6px rgb(19 69 64 / 0.05);
+  --duration-short: 150ms;
+  --duration-medium: 220ms;
+  --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+}
+
+/* Focus ring for keyboard users — matches large-touch affordance */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Inputs often need inner outline */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 0;
+}
+
+/* Opt-in: add `motion-safe` to elements that should drop transitions when requested */
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe {
+    transition: none !important;
+    transform: none !important;
+  }
+
+  .progressive-blur-landing {
+    display: none;
+  }
+}

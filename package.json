@@ -1,0 +1,22 @@
+{
+  "name": "silene-systems",
+  "private": true,
+  "workspaces": ["web"],
+  "scripts": {
+    "dev": "npm run dev --workspace eldercare-web",
+    "build": "npm run build --workspace eldercare-web",
+    "start": "npm run start --workspace eldercare-web",
+    "lint": "npm run lint --workspace eldercare-web",
+    "sb": "supabase",
+    "sb:login": "supabase login",
+    "sb:link": "supabase link",
+    "sb:start": "supabase start",
+    "sb:stop": "supabase stop",
+    "sb:status": "supabase status",
+    "sb:reset": "supabase db reset",
+    "sb:env": "supabase status -o env --override-name api.url=NEXT_PUBLIC_SUPABASE_URL --override-name anon_key=NEXT_PUBLIC_SUPABASE_ANON_KEY"
+  },
+  "devDependencies": {
+    "supabase": "^2.49.1"
+  }
+}

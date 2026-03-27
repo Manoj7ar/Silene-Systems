@@ -1,8 +1,13 @@
 .DS_Store
 .env
 .env.*
+!.env.example
+!**/.env.example
 *.log
 __pycache__/
 .python-version
 .venv/
 node_modules/
+
+# Next.js build output (never commit; mixed caches cause missing chunk errors)
+**/.next/

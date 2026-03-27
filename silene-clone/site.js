@@ -84,7 +84,9 @@
         var block = inner.querySelector(".flex.max-w-2xl");
         var h1 = block && block.querySelector("h1");
         var sub = block && block.querySelector("p");
-        var cta = inner.querySelector('a[href*="app.silene"]');
+        var cta =
+          inner.querySelector('a[href*="/get-started"]') ||
+          inner.querySelector('a[href*="app.silene"]');
         var heroEls = [logo, h1, sub, cta].filter(Boolean);
         heroEls.forEach(function (el, i) {
           el.classList.add("motion-reveal", "motion-hero-" + i);
@@ -159,19 +161,6 @@
       }
     }
 
-    var workbench = document.getElementById("workbench");
-    if (workbench) {
-      var w4 = workbench.querySelector(".max-w-4xl");
-      if (w4) {
-        observeEach(w4.querySelectorAll(":scope > p, :scope > h2"), "motion-reveal-sm");
-      }
-      var demo = workbench.querySelector(".silene-demo");
-      if (demo) {
-        demo.classList.add("motion-pop");
-        io.observe(demo);
-      }
-    }
-
     var diseases = document.getElementById("supported-diseases");
     if (diseases) {
       var d6 = diseases.querySelector(".max-w-6xl");
@@ -187,14 +176,6 @@
       if (dgrid && dgrid.classList && dgrid.classList.contains("grid")) {
         dgrid.classList.add("motion-reveal-lg");
         io.observe(dgrid);
-      }
-    }
-
-    var cta = document.getElementById("cta");
-    if (cta) {
-      var box = cta.querySelector(".max-w-3xl");
-      if (box) {
-        observeEach(box.querySelectorAll(":scope > div, :scope > img"), "motion-reveal-sm");
       }
     }
 

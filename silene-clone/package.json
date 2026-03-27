@@ -3,7 +3,7 @@
   "private": true,
   "description": "Static marketing site — deploy this folder (silene-clone) as site root.",
   "scripts": {
-    "start": "python3 -m http.server 3000",
-    "preview": "python3 -m http.server 3000"
+    "start": "python3 -m http.server 8080",
+    "preview": "python3 -m http.server 8080"
   }
 }
